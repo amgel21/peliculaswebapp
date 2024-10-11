@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie</title>
+</head>
+<style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #a8a8a8;
+      color: rgb(139, 139, 139);
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    .movie-details {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .movie-details img {
+      width: 100%;
+      border-radius: 8px;
+    }
+    .movie-details h2 {
+      margin: 20px 0;
+    }
+    .movie-details p {
+      color: rgb(66, 116, 244);
+    }
+    .stars {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+    }
+
+    .star {
+    font-size: 40px;
+    cursor: pointer;
+    color: #ddd;
+    }
+
+    .star:hover,
+    .star.selected {
+    color: #ff69b4; 
+    }
+
+    .remove-rating {
+      margin-top: 10px;
+      cursor: pointer;
+      color: red;
+      border: none;
+      background: none;
+      font-size: 14px;
+    }
+    .back-button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #a9ccf2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .back-button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div v-if="movie" class="movie-details">
+      <img :src="'https://image.tmdb.org/t/p/w500' + movie.poster_path" :alt="movie.title">
+      <h2>{{ movie.title }}</h2>
+      <p>{{ movie.overview }}</p>
+      <p>Rating: {{ movie.vote_average }}</p>
+      <p>Release Date: {{ movie.release_date }}</p>
+
+      <div class="stars">
+        <span v-for="n in 5" :key="n" 
+              class="star" 
+              :class="{ selected: n <= userRating }" 
+              @click="rateMovie(n)"
+              title="Vota">&#9733;</span>
+      </div>
+      <button v-if="userRating" class="remove-rating" @click="removeRating">Delete vote</button>
+
+      <button class="back-button" @click="goBack">Return to Movies</button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/vue@3"></script>
+  <script>
+    const apiKey = 'cf099e1443bc9a2df637136e1cb405d8'; 
+
+    const app = Vue.createApp({
+      data() {
+        return {
+          movie: null,
+          userRating: 0 
+        };
+      },
+      mounted() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const movieId = urlParams.get('id');
+        this.getMovieDetails(movieId);
+        this.loadRating(movieId);
+      },
+      methods: {
+        async getMovieDetails(id) {
+          const apiUrl = `https://api.themoviedb.org/3/movie/${id}?api_key=${apiKey}&language=en-US`;
+          try {
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            this.movie = data;
+          } catch (error) {
+            console.error('Error fetching movie details:', error);
+          }
+        },
+        rateMovie(rating) {
+          this.userRating = rating;
+          sessionStorage.setItem(`rating_${this.movie.id}`, rating); 
+        },
+        removeRating() {
+          this.userRating = 0;
+          sessionStorage.removeItem(`rating_${this.movie.id}`); 
+        },
+        loadRating(id) {
+          const savedRating = sessionStorage.getItem(`rating_${id}`);
+          if (savedRating) {
+            this.userRating = parseInt(savedRating);
+          }
+        },
+        goBack() {
+          window.location.href = 'movies.html'; 
+        }
+      }
+    });
+
+    app.mount('#app');
+  </script>
+</body>
+</html>
